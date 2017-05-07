@@ -1,16 +1,16 @@
-from flask import Flask, request, abort, redirect
+from flask import Flask, request, abort, redirect, render_template
 
 import errno
 import os
 import sys
 import tempfile
 import random
-import wikipedia
+#import wikipedia
 
-from markovchain import run
-from nGram import nRun, nUpdate, join
+#from markovchain import run
+from nGram import run as nRun, join
 
-from werkzeug.contrib.cache import SimpleCache
+#from werkzeug.contrib.cache import SimpleCache
 
 from argparse import ArgumentParser
 
@@ -33,31 +33,36 @@ from linebot.models import (
 
 app = Flask(__name__)
 
-cSecret = 'Insert channel secret'
-cAccessToken = 'Insert channel access token'
+cSecret = #
+cAccessToken = #
 
 line_bot_api = LineBotApi(cAccessToken)
 handler = WebhookHandler(cSecret)
-cache = SimpleCache(6000, 0)
-cache.set("nGramDict", nUpdate())
+#cache = SimpleCache(6000, 0)
+#cache.set("nGramDict", nUpdate())
 
 @app.route("/callback", methods = ["POST"])
 def callback():
-    f = open("/var/www/FlaskApp/FlaskApp/log.txt", 'a')
+   # f = open("/var/www/FlaskApp/FlaskApp/log.txt", 'a')
     body = request.get_data(as_text=True)
     signature = request.headers['X-Line-Signature']
-    f.write(str(body))
-    f.write("\n")
-    f.close()
+   # f.write(str(body))
+   # f.write("\n")
+   # f.close()
     handler.handle(body, signature)
     return("hi")
 
+@app.route("/callback2", methods = ["POST"])
+def callback2():
+    return("success")
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    f = open("/var/www/FlaskApp/FlaskApp/textlog.txt", 'a')
+   # f = open("/var/www/FlaskApp/FlaskApp/textlog.txt", 'a')
     if "@rb" not in event.message.text.split() and "@randombot" not in event.message.text.split():
-        f.write("`" + event.message.text + '`' + "\n")
-    f.close()
+    x = 0
+       # f.write("`" + event.message.text + '`' + "\n")
+   # f.close()
     result = textParser(event.message.text, event)
     if result == False:
         return False
@@ -67,10 +72,10 @@ def handle_message(event):
 
 @handler.default()
 def default(event):
-    f = open("/var/www/FlaskApp/FlaskApp/log2.txt", 'a')
-    f.write(str(event))
-    f.write("default")
-    f.close()
+   # f = open("/var/www/FlaskApp/FlaskApp/log2.txt", 'a')
+   # f.write(str(event))
+   # f.write("default")
+   # f.close()
     #textParser("Greed", event)
     return "ok"
 
@@ -96,15 +101,15 @@ def textParser(message, event):
                 return TextMessage(text=join(cache.get("nGramDict"), splitMessage[2]))
             else:
                 return TextMessage(text=join(cache.get("nGramDict")))
-	if "nUpdate" in splitMessage[1]:
-	    cache.set("nGramDict", nUpdate())
-	    return TextMessage(text="Updating nodes" + str(len(cache.get("nGramDict"))))
-	if "debug" in splitMessage[1]:
-	    try:
-	         if splitMessage[2] == "nlen":
-		    return TextMessage(text="uhh")
-	    except Exception, e:
-		return TextMessage(text="Debug error " + str(e))
+    if "nUpdate" in splitMessage[1]:
+        cache.set("nGramDict", nUpdate())
+        return TextMessage(text="Updating nodes" + str(len(cache.get("nGramDict"))))
+    if "debug" in splitMessage[1]:
+        try:
+             if splitMessage[2] == "nlen":
+            return TextMessage(text="uhh")
+        except Exception, e:
+        return TextMessage(text="Debug error " + str(e))
     return False
 
 def getUserId(id):
@@ -162,6 +167,11 @@ def hello():
      return "hello world"
     #return redirect("https://leosun.us/test", code=302)
 
+@app.route("/", methods=["POST"])
+def nGramChain():
+    length = int(request.form["text"])
+    return nRun(length)
+
 @app.route("/test")
 def hello2():
     return "placeholder"
@@ -182,5 +192,10 @@ def ngramupdate():
     return "updated"
     #return str(cache.get("nGramDict"))
 
+@app.route("/ngram")
+def nGramInput():
+    return render_template("nGramInput.html")
+
 if __name__ == "__main__":
     app.run()
+
